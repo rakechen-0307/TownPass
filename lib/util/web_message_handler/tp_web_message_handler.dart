@@ -9,6 +9,8 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 abstract class TPWebMessageHandler {
   String get name;
@@ -165,5 +167,67 @@ class OpenLinkMessageHandler extends TPWebMessageHandler {
       TPRoute.webView,
       arguments: message,
     );
+  }
+}
+
+class VoiceRecordMessageHandler extends TPWebMessageHandler {
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  String _lastWords = '';
+  String _returnText = '';
+
+  VoiceRecordMessageHandler() {
+    _initSpeech(); // Call it in the constructor
+    _startListening();
+    _stopListening();
+  }
+
+  @override
+  String get name => 'voice_record';
+
+  /// This has to happen only once per app
+  void _initSpeech() async {
+    await _speechToText.initialize();
+  }
+
+  /// Each time to start a speech recognition session
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+  }
+
+  /// Manually stop the active speech recognition session
+  /// Note that there are also timeouts that each platform enforces
+  /// and the SpeechToText plugin supports setting timeouts on the
+  /// listen method.
+  void _stopListening() async {
+    await _speechToText.stop();
+  }
+
+  /// This is the callback that the SpeechToText plugin calls when
+  /// the platform returns recognized words.
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    // print(result.recognizedWords);
+    _lastWords = result.recognizedWords;
+    _returnText = _returnText + _lastWords;
+  }
+
+  @override
+  handle({
+    required String? message,
+    required WebUri? sourceOrigin,
+    required bool isMainFrame,
+    required Function(WebMessage reply)? onReply,
+  }) async {
+    // print(message);
+    if (message == 'start') {
+      _startListening();
+    }
+    else if (message == 'stop') {
+      _stopListening();
+      onReply?.call(replyWebMessage(data: _returnText));
+    }
+    else {
+      // print('message unknown');
+      return;
+    }
   }
 }

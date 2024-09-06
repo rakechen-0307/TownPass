@@ -28,12 +28,28 @@ enum MyServiceItemId {
   library,
   locationSearch,
   zoo,
+  test,
+  voice
   ;
 }
 
 extension MyServiceIdExt on MyServiceItemId {
   MyServiceItem get item {
     return switch (this) {
+      MyServiceItemId.test => MyServiceItem(
+        title: '測試服務',
+        description: '測試服務',
+        icon: Assets.image.example.image(),
+        category: MyServiceCategory.other,
+        destinationUrl: 'https://codefest2024-39649.web.app/call',
+      ),
+      MyServiceItemId.voice => MyServiceItem(
+        title: '錄音測試',
+        description: '錄音測試',
+        icon: Assets.image.mic.image(),
+        category: MyServiceCategory.other,
+        destinationUrl: 'https://codefest2024-39649.web.app/voice',
+      ),
       MyServiceItemId.dedicatedLine => MyServiceItem(
           title: '1999',
           description: '播打網路語音通話',
