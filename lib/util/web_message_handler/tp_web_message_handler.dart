@@ -9,6 +9,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:speech_to_text_google_dialog/speech_to_text_google_dialog.dart';
 
 abstract class TPWebMessageHandler {
   String get name;
@@ -165,5 +166,28 @@ class OpenLinkMessageHandler extends TPWebMessageHandler {
       TPRoute.webView,
       arguments: message,
     );
+  }
+}
+
+class SpeechMessageHandler extends TPWebMessageHandler {
+  @override
+  String get name => 'voice_record';
+
+  @override
+  handle({
+    required String? message,
+    required WebUri? sourceOrigin,
+    required bool isMainFrame,
+    required Function(WebMessage reply)? onReply,
+  }) async {
+    print(message);
+    if (message == 'start') {
+      print('start listening...');
+      bool isServiceAvailable = await SpeechToTextGoogleDialog.getInstance().showGoogleDialog(onTextReceived: (data) {
+        String result = data.toString();
+        print(result);
+        onReply?.call(replyWebMessage(data: result));
+      }, locale: 'zh-TW');
+    }
   }
 }
